@@ -141,11 +141,29 @@ const Hero = () => {
             <Sparkles size={14} className="text-primary" />
           </motion.div>
 
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.25 }}
+            className="text-lg md:text-xl text-muted-foreground mb-2"
+          >
+            Hola, soy
+          </motion.p>
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight"
+            className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight text-gradient"
+          >
+            Andrés Felipe Noguera
+          </motion.h1>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="font-display text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
           >
             <span className="whitespace-nowrap">Transformo ideas en</span>
             <br />
@@ -158,7 +176,7 @@ const Hero = () => {
             >
               soluciones digitales
             </motion.span>
-          </motion.h1>
+          </motion.h2>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
