@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Github, Briefcase, Code, Video } from "lucide-react";
+import { ExternalLink, Briefcase, Code, Video, Play, MousePointerClick } from "lucide-react";
 
 const projects = [
   {
@@ -9,6 +9,8 @@ const projects = [
     tags: ["React", "Node.js", "PostgreSQL", "Analytics"],
     icon: Briefcase,
     image: "bg-gradient-to-br from-primary/20 to-accent/10",
+    link: "/sistema-gestion",
+    isInternal: true,
   },
   {
     title: "E-commerce & Marketing Digital",
@@ -17,6 +19,8 @@ const projects = [
     tags: ["Shopify", "Meta Ads", "SEO", "Email Marketing"],
     icon: Code,
     image: "bg-gradient-to-br from-accent/20 to-primary/10",
+    link: "/ecommerce",
+    isInternal: true,
   },
   {
     title: "Campaña Audiovisual Corporativa",
@@ -25,6 +29,8 @@ const projects = [
     tags: ["Premiere Pro", "After Effects", "Redes Sociales"],
     icon: Video,
     image: "bg-gradient-to-br from-primary/15 to-accent/20",
+    link: "https://drive.google.com/file/d/1vymCO2rbdXaSrOMVorllVm4G0pCDfzD-/view?usp=drive_link",
+    isInternal: false,
   },
 ];
 
@@ -64,14 +70,37 @@ const Projects = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                 <project.icon className="w-16 h-16 text-primary/40 group-hover:text-primary/60 transition-colors" />
                 
+                {/* Clickable indicator badge */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-medium shadow-lg"
+                >
+                  <MousePointerClick size={12} />
+                  <span>Haz clic para ver</span>
+                </motion.div>
+                
                 {/* Hover Actions */}
                 <div className="absolute inset-0 bg-background/80 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="p-3 rounded-full bg-primary text-primary-foreground hover:scale-110 transition-transform">
-                    <ExternalLink size={20} />
-                  </button>
-                  <button className="p-3 rounded-full bg-secondary border border-border hover:border-primary/50 hover:scale-110 transition-all">
-                    <Github size={20} />
-                  </button>
+                  {project.isInternal ? (
+                    <a 
+                      href={project.link}
+                      className="p-4 rounded-full bg-primary text-primary-foreground hover:scale-110 transition-transform flex items-center gap-2"
+                    >
+                      <ExternalLink size={20} />
+                      <span className="font-medium">Ver proyecto</span>
+                    </a>
+                  ) : (
+                    <a 
+                      href={project.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-4 rounded-full bg-primary text-primary-foreground hover:scale-110 transition-transform flex items-center gap-2"
+                    >
+                      <Play size={20} />
+                      <span className="font-medium">Ver video</span>
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -86,7 +115,7 @@ const Projects = () => {
                 <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
                   {project.description}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {project.tags.map((tag) => (
                     <span
                       key={tag}
@@ -96,6 +125,27 @@ const Projects = () => {
                     </span>
                   ))}
                 </div>
+                
+                {/* Action button */}
+                {project.isInternal ? (
+                  <a
+                    href={project.link}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                  >
+                    <ExternalLink size={14} />
+                    Explorar proyecto
+                  </a>
+                ) : (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                  >
+                    <Play size={14} />
+                    Reproducir video
+                  </a>
+                )}
               </div>
             </motion.div>
           ))}
