@@ -412,32 +412,32 @@ const Ecommerce = () => {
       {/* Product Detail Modal */}
       <AnimatePresence>
         {selectedProduct && (
-          <>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-50"
+              className="absolute inset-0 bg-black/60"
               onClick={() => setSelectedProduct(null)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] bg-card border border-border rounded-xl z-50 overflow-hidden shadow-2xl"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl max-h-[85vh] bg-card border border-border rounded-xl overflow-hidden shadow-2xl"
             >
               <button 
                 onClick={() => setSelectedProduct(null)}
-                className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg z-10"
+                className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg z-10 bg-background/50"
               >
                 <X size={20} />
               </button>
               
-              <div className="grid md:grid-cols-2">
-                <div className="bg-gradient-to-br from-secondary to-secondary/50 p-12 flex items-center justify-center">
+              <div className="grid md:grid-cols-2 max-h-[85vh] overflow-y-auto">
+                <div className="bg-gradient-to-br from-secondary to-secondary/50 p-12 flex items-center justify-center min-h-[200px]">
                   <span className="text-8xl">{selectedProduct.image}</span>
                 </div>
-                <div className="p-6 overflow-y-auto max-h-[60vh] md:max-h-none">
+                <div className="p-6 overflow-y-auto">
                   <Badge className="mb-2">{selectedProduct.category}</Badge>
                   <h3 className="text-2xl font-bold mb-2">{selectedProduct.name}</h3>
                   
@@ -507,7 +507,7 @@ const Ecommerce = () => {
                 </div>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
 
