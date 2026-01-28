@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
@@ -23,8 +23,11 @@ const Navbar = () => {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <a href="#" className="font-display text-xl font-bold text-gradient">
-              MiPortafolio
+            <a href="#" className="flex items-center gap-2 font-display text-xl font-bold">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                <Sparkles className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <span className="text-gradient">MiPortafolio</span>
             </a>
 
             {/* Desktop Navigation */}
