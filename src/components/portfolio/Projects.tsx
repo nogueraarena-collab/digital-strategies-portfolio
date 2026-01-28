@@ -29,7 +29,7 @@ const projects = [
     tags: ["MySQL", "Power BI", "Python", "ETL"],
     icon: BarChart3,
     image: "bg-gradient-to-br from-emerald-500/20 to-primary/10",
-    link: "#contact",
+    link: "/dashboard-analytics",
     isInternal: true,
   },
   {
@@ -39,7 +39,7 @@ const projects = [
     tags: ["Gestión de Proyectos", "Cloud", "Procesos", "Capacitación"],
     icon: TrendingUp,
     image: "bg-gradient-to-br from-violet-500/20 to-accent/15",
-    link: "#contact",
+    link: "/transformacion-digital",
     isInternal: true,
   },
   {
@@ -49,7 +49,7 @@ const projects = [
     tags: ["React", "MySQL", "REST API", "Node.js"],
     icon: FileText,
     image: "bg-gradient-to-br from-amber-500/20 to-primary/10",
-    link: "#contact",
+    link: "/gestion-documental",
     isInternal: true,
   },
   {
