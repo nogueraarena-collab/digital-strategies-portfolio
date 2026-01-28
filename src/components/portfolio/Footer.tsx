@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <p className="font-display text-xl font-bold text-gradient mb-2">
-              MiPortafolio
+              Andrés Felipe Noguera
             </p>
             <p className="text-sm text-muted-foreground">
               Administrador de Empresas & Desarrollador de Software

@@ -24,7 +24,7 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <a href="#" className="font-display text-xl font-bold text-gradient">
-              MiPortafolio
+              Andrés F. Noguera
             </a>
 
             {/* Desktop Navigation */}
