@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Briefcase, Code, Video, Play, MousePointerClick } from "lucide-react";
+import { ExternalLink, Briefcase, Code, Video, Play, MousePointerClick, BarChart3, TrendingUp, FileText } from "lucide-react";
 
 const projects = [
   {
@@ -20,6 +20,36 @@ const projects = [
     icon: Code,
     image: "bg-gradient-to-br from-accent/20 to-primary/10",
     link: "/ecommerce",
+    isInternal: true,
+  },
+  {
+    title: "Dashboard de Análisis de Datos",
+    category: "Análisis de Datos & MySQL",
+    description: "Sistema de Business Intelligence con visualización de KPIs en tiempo real, consultas SQL optimizadas y reportes automatizados para toma de decisiones estratégicas.",
+    tags: ["MySQL", "Power BI", "Python", "ETL"],
+    icon: BarChart3,
+    image: "bg-gradient-to-br from-emerald-500/20 to-primary/10",
+    link: "#contact",
+    isInternal: true,
+  },
+  {
+    title: "Transformación Digital PyME",
+    category: "Consultoría & Gestión",
+    description: "Proyecto de digitalización integral para pequeñas empresas: automatización de procesos, migración a la nube y capacitación del equipo.",
+    tags: ["Gestión de Proyectos", "Cloud", "Procesos", "Capacitación"],
+    icon: TrendingUp,
+    image: "bg-gradient-to-br from-violet-500/20 to-accent/15",
+    link: "#contact",
+    isInternal: true,
+  },
+  {
+    title: "Sistema de Gestión Documental",
+    category: "Backend & Bases de Datos",
+    description: "Aplicación web para gestión documental con control de versiones, flujos de aprobación y búsqueda avanzada con indexación MySQL.",
+    tags: ["React", "MySQL", "REST API", "Node.js"],
+    icon: FileText,
+    image: "bg-gradient-to-br from-amber-500/20 to-primary/10",
+    link: "#contact",
     isInternal: true,
   },
   {
