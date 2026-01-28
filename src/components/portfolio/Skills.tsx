@@ -6,7 +6,7 @@ const skillCategories = [
     skills: [
       { name: "Planificación Estratégica", level: 95 },
       { name: "Gestión de Proyectos", level: 90 },
-      { name: "Análisis de Negocios", level: 88 },
+      { name: "Análisis de Negocios", level: 100 },
       { name: "Liderazgo de Equipos", level: 85 },
     ],
   },
@@ -15,17 +15,17 @@ const skillCategories = [
     skills: [
       { name: "React / TypeScript", level: 88 },
       { name: "Python / Node.js", level: 82 },
-      { name: "Bases de Datos SQL", level: 85 },
+      { name: "Bases de Datos SQL", level: 100 },
       { name: "APIs & Integraciones", level: 80 },
     ],
   },
   {
     title: "Creatividad & Comunicación",
     skills: [
-      { name: "Edición de Video", level: 85 },
-      { name: "Marketing Digital", level: 82 },
+      { name: "Edición de Video", level: 100 },
+      { name: "Marketing Digital", level: 100 },
       { name: "Copywriting", level: 78 },
-      { name: "Diseño UX/UI", level: 75 },
+      { name: "Diseño UX/UI", level: 100 },
     ],
   },
 ];

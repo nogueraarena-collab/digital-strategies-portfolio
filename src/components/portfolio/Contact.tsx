@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Mail, Linkedin, Github, MapPin, Send } from "lucide-react";
+import { Mail, MapPin, Send } from "lucide-react";
 import { useState } from "react";
 
 const Contact = () => {
@@ -74,24 +74,6 @@ const Contact = () => {
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 rounded-lg bg-secondary border border-border flex items-center justify-center hover:border-primary/50 hover:text-primary transition-all"
-              >
-                <Linkedin size={20} />
-              </a>
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 rounded-lg bg-secondary border border-border flex items-center justify-center hover:border-primary/50 hover:text-primary transition-all"
-              >
-                <Github size={20} />
-              </a>
-            </div>
           </motion.div>
 
           {/* Contact Form */}
