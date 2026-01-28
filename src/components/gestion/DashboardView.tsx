@@ -65,22 +65,31 @@ const DashboardView = ({ products, orders, clients, salesData, onViewOrder }: Da
         >
           <Card className="border-border">
             <CardHeader>
-              <CardTitle>Ventas Mensuales</CardTitle>
+              <CardTitle>Tendencia de Ventas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-end justify-between h-64 gap-4">
-                {salesData.map((data, index) => (
-                  <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(data.ventas / maxSales) * 100}%` }}
-                      transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                      className="w-full bg-gradient-to-t from-primary to-primary/50 rounded-t-lg min-h-[20px] cursor-pointer hover:from-primary/80 hover:to-primary/40 transition-colors"
-                      title={`$${data.ventas.toLocaleString()}`}
-                    />
-                    <span className="text-xs text-muted-foreground">{data.month}</span>
-                  </div>
-                ))}
+              <div className="flex items-end justify-between h-64 gap-4 pt-8">
+                {salesData.map((data, index) => {
+                  const percentage = (data.ventas / maxSales) * 100;
+                  const minHeight = 15; // Altura mínima en porcentaje
+                  const heightValue = minHeight + ((percentage / 100) * (100 - minHeight));
+                  
+                  return (
+                    <div key={data.month} className="flex-1 flex flex-col items-center gap-2 relative">
+                      <span className="absolute -top-6 text-xs font-medium text-primary">
+                        ${(data.ventas / 1000).toFixed(1)}k
+                      </span>
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: `${heightValue}%` }}
+                        transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+                        className="w-full bg-gradient-to-t from-primary to-cyan-400 rounded-t-lg cursor-pointer hover:from-primary/80 hover:to-cyan-400/80 transition-colors shadow-lg"
+                        title={`$${data.ventas.toLocaleString()}`}
+                      />
+                      <span className="text-xs text-muted-foreground">{data.month}</span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
