@@ -70,23 +70,28 @@ const DashboardView = ({ products, orders, clients, salesData, onViewOrder }: Da
             <CardContent>
               <div className="flex items-end justify-between h-64 gap-4 pt-8">
                 {salesData.map((data, index) => {
-                  const percentage = (data.ventas / maxSales) * 100;
-                  const minHeight = 15; // Altura mínima en porcentaje
-                  const heightValue = minHeight + ((percentage / 100) * (100 - minHeight));
+                  // Calcular altura proporcional real basada en el valor
+                  const minSales = Math.min(...salesData.map(d => d.ventas));
+                  const range = maxSales - minSales;
+                  // Escala: el mínimo tendrá 30% de altura, el máximo tendrá 100%
+                  const normalizedValue = range > 0 ? (data.ventas - minSales) / range : 1;
+                  const heightPercent = 30 + (normalizedValue * 70); // Entre 30% y 100%
                   
                   return (
-                    <div key={data.month} className="flex-1 flex flex-col items-center gap-2 relative">
-                      <span className="absolute -top-6 text-xs font-medium text-primary">
+                    <div key={data.month} className="flex-1 flex flex-col items-center gap-2 relative h-full">
+                      <span className="absolute -top-6 text-xs font-medium text-cyan-400">
                         ${(data.ventas / 1000).toFixed(1)}k
                       </span>
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${heightValue}%` }}
-                        transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                        className="w-full bg-gradient-to-t from-primary to-cyan-400 rounded-t-lg cursor-pointer hover:from-primary/80 hover:to-cyan-400/80 transition-colors shadow-lg"
-                        title={`$${data.ventas.toLocaleString()}`}
-                      />
-                      <span className="text-xs text-muted-foreground">{data.month}</span>
+                      <div className="flex-1 w-full flex items-end">
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${heightPercent}%` }}
+                          transition={{ delay: 0.5 + index * 0.1, duration: 0.5, ease: "easeOut" }}
+                          className="w-full bg-gradient-to-t from-primary to-cyan-400 rounded-t-lg cursor-pointer hover:from-primary/80 hover:to-cyan-400/80 transition-colors shadow-lg"
+                          title={`$${data.ventas.toLocaleString()}`}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground mt-2">{data.month}</span>
                     </div>
                   );
                 })}
