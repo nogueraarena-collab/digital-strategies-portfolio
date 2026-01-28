@@ -25,7 +25,7 @@ const projects = [
   {
     title: "Campaña Audiovisual Corporativa",
     category: "Video & Comunicación",
-    description: "Producción de contenido audiovisual para redes sociales con más de 500K visualizaciones.",
+    description: "Producción profesional de contenido audiovisual para comunicación corporativa y redes sociales.",
     tags: ["Premiere Pro", "After Effects", "Redes Sociales"],
     icon: Video,
     image: "bg-gradient-to-br from-primary/15 to-accent/20",

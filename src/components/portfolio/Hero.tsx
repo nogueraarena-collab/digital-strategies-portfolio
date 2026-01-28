@@ -147,7 +147,8 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight"
           >
-            Transformo ideas en{" "}
+            <span className="whitespace-nowrap">Transformo ideas en</span>
+            <br />
             <motion.span 
               className="text-gradient inline-block"
               animate={{ 
