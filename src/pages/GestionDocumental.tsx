@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { 
   ArrowLeft, FileText, Search, Filter, Upload, Download,
   FolderOpen, File, Clock, CheckCircle2, XCircle, Eye,
   Edit, Trash2, MoreVertical, Users, Calendar, Tag,
-  FileCheck, FileClock, FileX, ChevronRight, Database
+  FileCheck, FileClock, FileX, ChevronRight, Database, X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 // Caso: Constructora Andina S.A.S - Cali
 const documentos = [
@@ -137,10 +147,29 @@ const historialVersiones = [
   { version: "v1.0", fecha: "2024-01-15", autor: "María González", cambio: "Versión inicial", estado: "anterior" },
 ];
 
+// Tipos y Proyectos únicos para filtros
+const tiposUnicos = [...new Set(documentos.map(d => d.tipo))];
+const proyectosUnicos = [...new Set(documentos.map(d => d.proyecto))];
+const estadosUnicos = [
+  { value: "aprobado", label: "Aprobado" },
+  { value: "en_revision", label: "En Revisión" },
+  { value: "pendiente", label: "Pendiente" },
+  { value: "rechazado", label: "Rechazado" },
+];
+
 const GestionDocumental = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<typeof documentos[0] | null>(null);
   const [showVersions, setShowVersions] = useState(false);
+  
+  // Estados para filtros
+  const [selectedTipos, setSelectedTipos] = useState<string[]>([]);
+  const [selectedProyectos, setSelectedProyectos] = useState<string[]>([]);
+  const [selectedEstados, setSelectedEstados] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
 
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
@@ -157,11 +186,46 @@ const GestionDocumental = () => {
     }
   };
 
-  const filteredDocs = documentos.filter(doc =>
-    doc.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.proyecto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.tipo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const toggleFilter = (value: string, selected: string[], setSelected: React.Dispatch<React.SetStateAction<string[]>>) => {
+    if (selected.includes(value)) {
+      setSelected(selected.filter(v => v !== value));
+    } else {
+      setSelected([...selected, value]);
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSelectedTipos([]);
+    setSelectedProyectos([]);
+    setSelectedEstados([]);
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const activeFiltersCount = selectedTipos.length + selectedProyectos.length + selectedEstados.length + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
+
+  const filteredDocs = documentos.filter(doc => {
+    // Búsqueda por texto
+    const matchesSearch = doc.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.proyecto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.tipo.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro por tipo
+    const matchesTipo = selectedTipos.length === 0 || selectedTipos.includes(doc.tipo);
+    
+    // Filtro por proyecto
+    const matchesProyecto = selectedProyectos.length === 0 || selectedProyectos.includes(doc.proyecto);
+    
+    // Filtro por estado
+    const matchesEstado = selectedEstados.length === 0 || selectedEstados.includes(doc.estado);
+    
+    // Filtro por fecha
+    const docDate = new Date(doc.fechaCreacion);
+    const matchesDateFrom = !dateFrom || docDate >= dateFrom;
+    const matchesDateTo = !dateTo || docDate <= dateTo;
+    
+    return matchesSearch && matchesTipo && matchesProyecto && matchesEstado && matchesDateFrom && matchesDateTo;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -277,18 +341,213 @@ const GestionDocumental = () => {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline">
-                      <Filter size={16} className="mr-2" />
-                      Filtros
-                    </Button>
-                    <Button variant="outline">
-                      <Calendar size={16} className="mr-2" />
-                      Fecha
-                    </Button>
+                    {/* Botón de Filtros */}
+                    <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="relative">
+                          <Filter size={16} className="mr-2" />
+                          Filtros
+                          {(selectedTipos.length + selectedProyectos.length + selectedEstados.length) > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                              {selectedTipos.length + selectedProyectos.length + selectedEstados.length}
+                            </span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-4" align="end">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">Filtros</h4>
+                            {(selectedTipos.length + selectedProyectos.length + selectedEstados.length) > 0 && (
+                              <Button variant="ghost" size="sm" onClick={() => { setSelectedTipos([]); setSelectedProyectos([]); setSelectedEstados([]); }}>
+                                <X size={14} className="mr-1" />
+                                Limpiar
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {/* Filtro por Tipo */}
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-muted-foreground">Tipo de Documento</p>
+                            <div className="space-y-2">
+                              {tiposUnicos.map(tipo => (
+                                <label key={tipo} className="flex items-center gap-2 cursor-pointer">
+                                  <Checkbox 
+                                    checked={selectedTipos.includes(tipo)}
+                                    onCheckedChange={() => toggleFilter(tipo, selectedTipos, setSelectedTipos)}
+                                  />
+                                  <span className="text-sm">{tipo}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Filtro por Proyecto */}
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-muted-foreground">Proyecto</p>
+                            <div className="space-y-2">
+                              {proyectosUnicos.map(proyecto => (
+                                <label key={proyecto} className="flex items-center gap-2 cursor-pointer">
+                                  <Checkbox 
+                                    checked={selectedProyectos.includes(proyecto)}
+                                    onCheckedChange={() => toggleFilter(proyecto, selectedProyectos, setSelectedProyectos)}
+                                  />
+                                  <span className="text-sm">{proyecto}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Filtro por Estado */}
+                          <div>
+                            <p className="text-sm font-medium mb-2 text-muted-foreground">Estado</p>
+                            <div className="space-y-2">
+                              {estadosUnicos.map(estado => (
+                                <label key={estado.value} className="flex items-center gap-2 cursor-pointer">
+                                  <Checkbox 
+                                    checked={selectedEstados.includes(estado.value)}
+                                    onCheckedChange={() => toggleFilter(estado.value, selectedEstados, setSelectedEstados)}
+                                  />
+                                  <span className="text-sm">{estado.label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <Button className="w-full" onClick={() => setFiltersOpen(false)}>
+                            Aplicar Filtros
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {/* Botón de Fecha */}
+                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="relative">
+                          <Calendar size={16} className="mr-2" />
+                          Fecha
+                          {(dateFrom || dateTo) && (
+                            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                              ✓
+                            </span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-4" align="end">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold">Rango de Fechas</h4>
+                            {(dateFrom || dateTo) && (
+                              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                                <X size={14} className="mr-1" />
+                                Limpiar
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="grid gap-4">
+                            <div>
+                              <p className="text-sm font-medium mb-2 text-muted-foreground">Desde</p>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                                    <Calendar size={16} className="mr-2" />
+                                    {dateFrom ? format(dateFrom, "PPP", { locale: es }) : "Seleccionar fecha"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={dateFrom}
+                                    onSelect={setDateFrom}
+                                    initialFocus
+                                    className="pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                            
+                            <div>
+                              <p className="text-sm font-medium mb-2 text-muted-foreground">Hasta</p>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                                    <Calendar size={16} className="mr-2" />
+                                    {dateTo ? format(dateTo, "PPP", { locale: es }) : "Seleccionar fecha"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={dateTo}
+                                    onSelect={setDateTo}
+                                    initialFocus
+                                    className="pointer-events-auto"
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          </div>
+                          
+                          {(dateFrom || dateTo) && (
+                            <div className="p-2 bg-secondary rounded-lg">
+                              <p className="text-xs text-muted-foreground">
+                                {dateFrom && dateTo 
+                                  ? `${format(dateFrom, "dd/MM/yyyy")} - ${format(dateTo, "dd/MM/yyyy")}`
+                                  : dateFrom 
+                                    ? `Desde: ${format(dateFrom, "dd/MM/yyyy")}`
+                                    : `Hasta: ${format(dateTo!, "dd/MM/yyyy")}`
+                                }
+                              </p>
+                            </div>
+                          )}
+                          
+                          <Button className="w-full" onClick={() => setDateOpen(false)}>
+                            Aplicar Fechas
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Indicador de filtros activos */}
+            {activeFiltersCount > 0 && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <span className="text-sm text-muted-foreground">Filtros activos:</span>
+                {selectedTipos.map(t => (
+                  <Badge key={t} variant="secondary" className="cursor-pointer" onClick={() => toggleFilter(t, selectedTipos, setSelectedTipos)}>
+                    {t} <X size={12} className="ml-1" />
+                  </Badge>
+                ))}
+                {selectedProyectos.map(p => (
+                  <Badge key={p} variant="secondary" className="cursor-pointer" onClick={() => toggleFilter(p, selectedProyectos, setSelectedProyectos)}>
+                    {p} <X size={12} className="ml-1" />
+                  </Badge>
+                ))}
+                {selectedEstados.map(e => (
+                  <Badge key={e} variant="secondary" className="cursor-pointer" onClick={() => toggleFilter(e, selectedEstados, setSelectedEstados)}>
+                    {estadosUnicos.find(x => x.value === e)?.label} <X size={12} className="ml-1" />
+                  </Badge>
+                ))}
+                {dateFrom && (
+                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setDateFrom(undefined)}>
+                    Desde: {format(dateFrom, "dd/MM/yy")} <X size={12} className="ml-1" />
+                  </Badge>
+                )}
+                {dateTo && (
+                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setDateTo(undefined)}>
+                    Hasta: {format(dateTo, "dd/MM/yy")} <X size={12} className="ml-1" />
+                  </Badge>
+                )}
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  Limpiar todo
+                </Button>
+              </div>
+            )}
 
             {/* Lista de documentos */}
             <Card>
@@ -296,6 +555,7 @@ const GestionDocumental = () => {
                 <CardTitle>Documentos Recientes</CardTitle>
                 <CardDescription>
                   Mostrando {filteredDocs.length} de {documentos.length} documentos
+                  {activeFiltersCount > 0 && ` (${activeFiltersCount} filtros aplicados)`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
