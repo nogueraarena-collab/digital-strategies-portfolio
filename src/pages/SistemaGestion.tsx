@@ -4,9 +4,7 @@ import {
   Package, 
   TrendingUp, 
   Users, 
-  DollarSign, 
   BarChart3, 
-  ShoppingCart,
   ArrowLeft,
   Plus,
   Search,
@@ -16,46 +14,206 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
-const inventoryData = [
-  { id: 1, name: "Laptop Dell XPS 15", category: "Electrónicos", stock: 45, price: 1299.99, status: "En stock" },
-  { id: 2, name: "Monitor LG 27\"", category: "Electrónicos", stock: 23, price: 349.99, status: "En stock" },
-  { id: 3, name: "Teclado Mecánico", category: "Accesorios", stock: 8, price: 89.99, status: "Bajo stock" },
-  { id: 4, name: "Mouse Inalámbrico", category: "Accesorios", stock: 0, price: 45.99, status: "Agotado" },
-  { id: 5, name: "Silla Ergonómica", category: "Mobiliario", stock: 15, price: 299.99, status: "En stock" },
-  { id: 6, name: "Escritorio Ajustable", category: "Mobiliario", stock: 12, price: 499.99, status: "En stock" },
-];
+// Components
+import DashboardView from "@/components/gestion/DashboardView";
+import InventoryView from "@/components/gestion/InventoryView";
+import SalesView from "@/components/gestion/SalesView";
+import ClientsView from "@/components/gestion/ClientsView";
+import ReportsView from "@/components/gestion/ReportsView";
+import ProductModal from "@/components/gestion/ProductModal";
+import ClientModal from "@/components/gestion/ClientModal";
+import OrderModal from "@/components/gestion/OrderModal";
+import OrderDetailModal from "@/components/gestion/OrderDetailModal";
 
-const salesData = [
-  { month: "Ene", ventas: 12500 },
-  { month: "Feb", ventas: 15800 },
-  { month: "Mar", ventas: 14200 },
-  { month: "Abr", ventas: 18500 },
-  { month: "May", ventas: 21000 },
-  { month: "Jun", ventas: 19800 },
-];
-
-const recentOrders = [
-  { id: "#ORD-001", cliente: "María García", total: 1549.98, estado: "Completado" },
-  { id: "#ORD-002", cliente: "Carlos López", total: 349.99, estado: "En proceso" },
-  { id: "#ORD-003", cliente: "Ana Martínez", total: 799.98, estado: "Pendiente" },
-  { id: "#ORD-004", cliente: "Juan Rodríguez", total: 2199.97, estado: "Completado" },
-];
+// Data & Types
+import { Product, Client, Order, TabId } from "@/components/gestion/types";
+import { initialProducts, initialClients, initialOrders, initialSalesData } from "@/components/gestion/data";
 
 const SistemaGestion = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const stats = [
-    { title: "Ventas Totales", value: "$102,800", change: "+12.5%", icon: DollarSign, color: "text-green-500" },
-    { title: "Productos", value: "156", change: "+3", icon: Package, color: "text-blue-500" },
-    { title: "Clientes", value: "1,234", change: "+48", icon: Users, color: "text-purple-500" },
-    { title: "Pedidos", value: "89", change: "+15%", icon: ShoppingCart, color: "text-orange-500" },
+  // Data State
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [salesData] = useState(initialSalesData);
+
+  // Modal States
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [orderDetailModalOpen, setOrderDetailModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+
+  // Product CRUD
+  const handleAddProduct = () => {
+    setEditingProduct(null);
+    setProductModalOpen(true);
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setProductModalOpen(true);
+  };
+
+  const handleSaveProduct = (productData: Omit<Product, "id" | "status">) => {
+    const status: Product["status"] = 
+      productData.stock === 0 ? "Agotado" : 
+      productData.stock < 10 ? "Bajo stock" : "En stock";
+
+    if (editingProduct) {
+      setProducts(products.map(p => 
+        p.id === editingProduct.id 
+          ? { ...p, ...productData, status } 
+          : p
+      ));
+      toast.success("Producto actualizado correctamente");
+    } else {
+      const newProduct: Product = {
+        ...productData,
+        id: Math.max(...products.map(p => p.id)) + 1,
+        status,
+      };
+      setProducts([...products, newProduct]);
+      toast.success("Producto creado correctamente");
+    }
+  };
+
+  const handleDeleteProduct = (productId: number) => {
+    setProducts(products.filter(p => p.id !== productId));
+    toast.success("Producto eliminado correctamente");
+  };
+
+  // Client CRUD
+  const handleAddClient = () => {
+    setEditingClient(null);
+    setClientModalOpen(true);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setClientModalOpen(true);
+  };
+
+  const handleSaveClient = (clientData: Omit<Client, "id" | "totalPurchases" | "lastPurchase" | "status">) => {
+    if (editingClient) {
+      setClients(clients.map(c => 
+        c.id === editingClient.id 
+          ? { ...c, ...clientData } 
+          : c
+      ));
+      toast.success("Cliente actualizado correctamente");
+    } else {
+      const newClient: Client = {
+        ...clientData,
+        id: Math.max(...clients.map(c => c.id)) + 1,
+        totalPurchases: 0,
+        lastPurchase: new Date().toISOString().split("T")[0],
+        status: "Activo",
+      };
+      setClients([...clients, newClient]);
+      toast.success("Cliente creado correctamente");
+    }
+  };
+
+  const handleDeleteClient = (clientId: number) => {
+    setClients(clients.filter(c => c.id !== clientId));
+    toast.success("Cliente eliminado correctamente");
+  };
+
+  // Order CRUD
+  const handleNewSale = () => {
+    setOrderModalOpen(true);
+  };
+
+  const handleSaveOrder = (orderData: Omit<Order, "id" | "date">) => {
+    const newOrder: Order = {
+      ...orderData,
+      id: `#ORD-${String(orders.length + 1).padStart(3, "0")}`,
+      date: new Date().toISOString().split("T")[0],
+    };
+    setOrders([newOrder, ...orders]);
+
+    // Update product stock
+    orderData.products.forEach(item => {
+      setProducts(prev => prev.map(p => {
+        if (p.id === item.productId) {
+          const newStock = Math.max(0, p.stock - item.quantity);
+          return {
+            ...p,
+            stock: newStock,
+            status: newStock === 0 ? "Agotado" : newStock < 10 ? "Bajo stock" : "En stock",
+          };
+        }
+        return p;
+      }));
+    });
+
+    // Update client purchases
+    setClients(prev => prev.map(c => {
+      if (c.id === orderData.clientId) {
+        return {
+          ...c,
+          totalPurchases: c.totalPurchases + 1,
+          lastPurchase: new Date().toISOString().split("T")[0],
+        };
+      }
+      return c;
+    }));
+
+    toast.success("Venta registrada correctamente");
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setViewingOrder(order);
+    setOrderDetailModalOpen(true);
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, status: Order["status"]) => {
+    setOrders(orders.map(o => 
+      o.id === orderId ? { ...o, status } : o
+    ));
+    toast.success(`Estado actualizado a "${status}"`);
+  };
+
+  // Global search handler
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.length > 0) {
+      // Check if query matches any product
+      const matchedProduct = products.find(p => 
+        p.name.toLowerCase().includes(query.toLowerCase())
+      );
+      if (matchedProduct) {
+        setActiveTab("inventario");
+        return;
+      }
+      
+      // Check if query matches any client
+      const matchedClient = clients.find(c => 
+        c.name.toLowerCase().includes(query.toLowerCase())
+      );
+      if (matchedClient) {
+        setActiveTab("clientes");
+        return;
+      }
+    }
+  };
+
+  const navItems = [
+    { id: "dashboard" as TabId, label: "Dashboard", icon: BarChart3 },
+    { id: "inventario" as TabId, label: "Inventario", icon: Package },
+    { id: "ventas" as TabId, label: "Ventas", icon: TrendingUp },
+    { id: "clientes" as TabId, label: "Clientes", icon: Users },
+    { id: "reportes" as TabId, label: "Reportes", icon: BarChart3 },
   ];
-
-  const maxSales = Math.max(...salesData.map(d => d.ventas));
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -71,13 +229,7 @@ const SistemaGestion = () => {
         </div>
         
         <nav className="px-4 space-y-2">
-          {[
-            { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-            { id: "inventario", label: "Inventario", icon: Package },
-            { id: "ventas", label: "Ventas", icon: TrendingUp },
-            { id: "clientes", label: "Clientes", icon: Users },
-            { id: "reportes", label: "Reportes", icon: BarChart3 },
-          ].map((item) => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
@@ -120,6 +272,8 @@ const SistemaGestion = () => {
                 <Input 
                   placeholder="Buscar productos, clientes..." 
                   className="pl-10 w-80 bg-secondary border-0"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -138,159 +292,104 @@ const SistemaGestion = () => {
           </div>
         </header>
 
-        {/* Dashboard Content */}
+        {/* Content Area */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">Bienvenido de vuelta, Administrador</p>
+              <h1 className="text-3xl font-bold capitalize">{activeTab}</h1>
+              <p className="text-muted-foreground">
+                {activeTab === "dashboard" && "Bienvenido de vuelta, Administrador"}
+                {activeTab === "inventario" && "Gestiona tu inventario de productos"}
+                {activeTab === "ventas" && "Historial y gestión de ventas"}
+                {activeTab === "clientes" && "Administra tu base de clientes"}
+                {activeTab === "reportes" && "Análisis y exportación de datos"}
+              </p>
             </div>
-            <Button className="gap-2">
-              <Plus size={18} />
-              Nuevo Producto
-            </Button>
+            {activeTab === "dashboard" && (
+              <Button className="gap-2" onClick={handleAddProduct}>
+                <Plus size={18} />
+                Nuevo Producto
+              </Button>
+            )}
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="border-border hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{stat.title}</p>
-                        <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                        <p className={`text-sm mt-1 ${stat.color}`}>{stat.change} este mes</p>
-                      </div>
-                      <div className={`p-3 rounded-xl bg-primary/10 ${stat.color}`}>
-                        <stat.icon size={24} />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          {/* Tab Content */}
+          {activeTab === "dashboard" && (
+            <DashboardView
+              products={products}
+              orders={orders}
+              clients={clients}
+              salesData={salesData}
+              onViewOrder={handleViewOrder}
+            />
+          )}
 
-          <div className="grid lg:grid-cols-3 gap-6 mb-8">
-            {/* Sales Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="lg:col-span-2"
-            >
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle>Ventas Mensuales</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between h-64 gap-4">
-                    {salesData.map((data, index) => (
-                      <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: `${(data.ventas / maxSales) * 100}%` }}
-                          transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                          className="w-full bg-gradient-to-t from-primary to-primary/50 rounded-t-lg min-h-[20px]"
-                        />
-                        <span className="text-xs text-muted-foreground">{data.month}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+          {activeTab === "inventario" && (
+            <InventoryView
+              products={products}
+              onAdd={handleAddProduct}
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
+            />
+          )}
 
-            {/* Recent Orders */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Card className="border-border">
-                <CardHeader>
-                  <CardTitle>Pedidos Recientes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                      <div>
-                        <p className="font-medium text-sm">{order.id}</p>
-                        <p className="text-xs text-muted-foreground">{order.cliente}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">${order.total}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          order.estado === "Completado" ? "bg-green-500/20 text-green-500" :
-                          order.estado === "En proceso" ? "bg-blue-500/20 text-blue-500" :
-                          "bg-yellow-500/20 text-yellow-500"
-                        }`}>
-                          {order.estado}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+          {activeTab === "ventas" && (
+            <SalesView
+              orders={orders}
+              onNewSale={handleNewSale}
+              onViewOrder={handleViewOrder}
+              onUpdateStatus={handleUpdateOrderStatus}
+            />
+          )}
 
-          {/* Inventory Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Card className="border-border">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Inventario de Productos</CardTitle>
-                <Button variant="outline" size="sm">Ver todo</Button>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Producto</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Categoría</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Stock</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Precio</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {inventoryData.map((item) => (
-                        <tr key={item.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
-                          <td className="py-3 px-4 font-medium">{item.name}</td>
-                          <td className="py-3 px-4 text-muted-foreground">{item.category}</td>
-                          <td className="py-3 px-4">{item.stock} unidades</td>
-                          <td className="py-3 px-4">${item.price}</td>
-                          <td className="py-3 px-4">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              item.status === "En stock" ? "bg-green-500/20 text-green-500" :
-                              item.status === "Bajo stock" ? "bg-yellow-500/20 text-yellow-500" :
-                              "bg-red-500/20 text-red-500"
-                            }`}>
-                              {item.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          {activeTab === "clientes" && (
+            <ClientsView
+              clients={clients}
+              onAdd={handleAddClient}
+              onEdit={handleEditClient}
+              onDelete={handleDeleteClient}
+            />
+          )}
+
+          {activeTab === "reportes" && (
+            <ReportsView
+              products={products}
+              orders={orders}
+              clients={clients}
+              salesData={salesData}
+            />
+          )}
         </div>
       </main>
+
+      {/* Modals */}
+      <ProductModal
+        isOpen={productModalOpen}
+        onClose={() => setProductModalOpen(false)}
+        onSave={handleSaveProduct}
+        product={editingProduct}
+      />
+
+      <ClientModal
+        isOpen={clientModalOpen}
+        onClose={() => setClientModalOpen(false)}
+        onSave={handleSaveClient}
+        client={editingClient}
+      />
+
+      <OrderModal
+        isOpen={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        onSave={handleSaveOrder}
+        products={products}
+        clients={clients}
+      />
+
+      <OrderDetailModal
+        isOpen={orderDetailModalOpen}
+        onClose={() => setOrderDetailModalOpen(false)}
+        order={viewingOrder}
+      />
     </div>
   );
 };

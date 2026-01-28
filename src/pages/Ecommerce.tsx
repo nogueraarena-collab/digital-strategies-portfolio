@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { 
   ShoppingCart, 
@@ -10,22 +10,29 @@ import {
   Plus,
   Minus,
   X,
-  ShoppingBag
+  ShoppingBag,
+  CreditCard,
+  Truck,
+  Shield,
+  ChevronRight,
+  Check,
+  Package
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const products = [
-  { id: 1, name: "Auriculares Bluetooth Pro", price: 149.99, originalPrice: 199.99, rating: 4.8, reviews: 234, image: "🎧", category: "Electrónicos", badge: "Más vendido" },
-  { id: 2, name: "Smartwatch Deportivo", price: 299.99, originalPrice: null, rating: 4.6, reviews: 156, image: "⌚", category: "Electrónicos", badge: null },
-  { id: 3, name: "Mochila Urban Tech", price: 89.99, originalPrice: 119.99, rating: 4.9, reviews: 89, image: "🎒", category: "Accesorios", badge: "Oferta" },
-  { id: 4, name: "Cámara Instantánea", price: 79.99, originalPrice: null, rating: 4.7, reviews: 312, image: "📷", category: "Electrónicos", badge: null },
-  { id: 5, name: "Lámpara LED Inteligente", price: 45.99, originalPrice: 59.99, rating: 4.5, reviews: 178, image: "💡", category: "Hogar", badge: "Nuevo" },
-  { id: 6, name: "Teclado Mecánico RGB", price: 129.99, originalPrice: null, rating: 4.8, reviews: 445, image: "⌨️", category: "Electrónicos", badge: "Más vendido" },
-  { id: 7, name: "Botella Térmica Premium", price: 34.99, originalPrice: 44.99, rating: 4.6, reviews: 267, image: "🍶", category: "Accesorios", badge: null },
-  { id: 8, name: "Altavoz Portátil", price: 69.99, originalPrice: 89.99, rating: 4.7, reviews: 198, image: "🔊", category: "Electrónicos", badge: "Oferta" },
+  { id: 1, name: "Auriculares Bluetooth Pro", price: 149.99, originalPrice: 199.99, rating: 4.8, reviews: 234, image: "🎧", category: "Electrónicos", badge: "Más vendido", description: "Auriculares inalámbricos con cancelación de ruido activa y 30h de batería." },
+  { id: 2, name: "Smartwatch Deportivo", price: 299.99, originalPrice: null, rating: 4.6, reviews: 156, image: "⌚", category: "Electrónicos", badge: null, description: "Reloj inteligente con GPS, monitor cardíaco y resistencia al agua." },
+  { id: 3, name: "Mochila Urban Tech", price: 89.99, originalPrice: 119.99, rating: 4.9, reviews: 89, image: "🎒", category: "Accesorios", badge: "Oferta", description: "Mochila ergonómica con compartimento para laptop y puerto USB." },
+  { id: 4, name: "Cámara Instantánea", price: 79.99, originalPrice: null, rating: 4.7, reviews: 312, image: "📷", category: "Electrónicos", badge: null, description: "Cámara de impresión instantánea con flash automático." },
+  { id: 5, name: "Lámpara LED Inteligente", price: 45.99, originalPrice: 59.99, rating: 4.5, reviews: 178, image: "💡", category: "Hogar", badge: "Nuevo", description: "Lámpara WiFi compatible con Alexa y Google Home, 16M de colores." },
+  { id: 6, name: "Teclado Mecánico RGB", price: 129.99, originalPrice: null, rating: 4.8, reviews: 445, image: "⌨️", category: "Electrónicos", badge: "Más vendido", description: "Teclado gaming con switches mecánicos y retroiluminación RGB." },
+  { id: 7, name: "Botella Térmica Premium", price: 34.99, originalPrice: 44.99, rating: 4.6, reviews: 267, image: "🍶", category: "Accesorios", badge: null, description: "Botella de acero inoxidable, mantiene temperatura por 24h." },
+  { id: 8, name: "Altavoz Portátil", price: 69.99, originalPrice: 89.99, rating: 4.7, reviews: 198, image: "🔊", category: "Electrónicos", badge: "Oferta", description: "Altavoz Bluetooth con sonido 360° y resistencia al agua IPX7." },
 ];
 
 const categories = ["Todos", "Electrónicos", "Accesorios", "Hogar"];
@@ -38,12 +45,24 @@ interface CartItem {
   image: string;
 }
 
+type CheckoutStep = "cart" | "shipping" | "payment" | "confirmation";
+
 const Ecommerce = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("cart");
+  const [shippingInfo, setShippingInfo] = useState({
+    name: "",
+    email: "",
+    address: "",
+    city: "",
+    phone: "",
+  });
+  const [orderComplete, setOrderComplete] = useState(false);
 
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
@@ -63,6 +82,7 @@ const Ecommerce = () => {
       }
       return [...prev, { id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image }];
     });
+    toast.success(`${product.name} agregado al carrito`);
   };
 
   const removeFromCart = (productId: number) => {
@@ -85,10 +105,42 @@ const Ecommerce = () => {
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const isFav = favorites.includes(productId);
+      toast.success(isFav ? "Eliminado de favoritos" : "Agregado a favoritos");
+    }
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const shippingCost = cartTotal > 100 ? 0 : 9.99;
+  const orderTotal = cartTotal + shippingCost;
+
+  const handleCheckout = () => {
+    setCheckoutStep("shipping");
+  };
+
+  const handleShippingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckoutStep("payment");
+  };
+
+  const handlePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckoutStep("confirmation");
+    setTimeout(() => {
+      setOrderComplete(true);
+      setCart([]);
+    }, 2000);
+  };
+
+  const resetCheckout = () => {
+    setCheckoutStep("cart");
+    setOrderComplete(false);
+    setIsCartOpen(false);
+    setShippingInfo({ name: "", email: "", address: "", city: "", phone: "" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,6 +175,24 @@ const Ecommerce = () => {
                   className="pl-10 w-64 bg-secondary border-0"
                 />
               </div>
+
+              <button 
+                onClick={() => {
+                  setSelectedCategory("Todos");
+                  const favProducts = products.filter(p => favorites.includes(p.id));
+                  if (favProducts.length > 0) {
+                    toast.info(`Tienes ${favProducts.length} productos favoritos`);
+                  }
+                }}
+                className="relative p-2 hover:bg-secondary rounded-lg"
+              >
+                <Heart size={24} />
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {favorites.length}
+                  </span>
+                )}
+              </button>
               
               <button 
                 onClick={() => setIsCartOpen(true)}
@@ -162,10 +232,22 @@ const Ecommerce = () => {
             <p className="text-muted-foreground text-lg mb-6">
               Descubre nuestra colección de productos tecnológicos con los mejores precios del mercado.
             </p>
-            <Button size="lg" className="gap-2">
-              <ShoppingBag size={20} />
-              Ver Ofertas
-            </Button>
+            <div className="flex flex-wrap gap-4">
+              <Button size="lg" className="gap-2">
+                <ShoppingBag size={20} />
+                Ver Ofertas
+              </Button>
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Truck size={18} />
+                  <span>Envío gratis +$100</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield size={18} />
+                  <span>Garantía 2 años</span>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -209,8 +291,11 @@ const Ecommerce = () => {
               className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all"
             >
               {/* Product Image */}
-              <div className="relative bg-gradient-to-br from-secondary to-secondary/50 p-8 flex items-center justify-center">
-                <span className="text-6xl">{product.image}</span>
+              <div 
+                className="relative bg-gradient-to-br from-secondary to-secondary/50 p-8 flex items-center justify-center cursor-pointer"
+                onClick={() => setSelectedProduct(product)}
+              >
+                <span className="text-6xl group-hover:scale-110 transition-transform">{product.image}</span>
                 
                 {product.badge && (
                   <Badge className="absolute top-3 left-3" variant={product.badge === "Oferta" ? "destructive" : "default"}>
@@ -219,7 +304,10 @@ const Ecommerce = () => {
                 )}
                 
                 <button
-                  onClick={() => toggleFavorite(product.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(product.id);
+                  }}
                   className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
                     favorites.includes(product.id) 
                       ? "bg-red-500 text-white" 
@@ -233,7 +321,10 @@ const Ecommerce = () => {
               {/* Product Info */}
               <div className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">{product.category}</p>
-                <h4 className="font-semibold mb-2 group-hover:text-primary transition-colors">
+                <h4 
+                  className="font-semibold mb-2 group-hover:text-primary transition-colors cursor-pointer"
+                  onClick={() => setSelectedProduct(product)}
+                >
                   {product.name}
                 </h4>
                 
@@ -269,91 +360,417 @@ const Ecommerce = () => {
         </div>
       </section>
 
-      {/* Cart Sidebar */}
-      {isCartOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={() => setIsCartOpen(false)}
-          />
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border z-50 flex flex-col"
-          >
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h3 className="text-xl font-bold">Carrito ({cartItemsCount})</h3>
+      {/* Features Section */}
+      <section className="bg-secondary/30 py-12">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex items-center gap-4 p-6 bg-card rounded-xl">
+              <div className="p-3 rounded-full bg-primary/20">
+                <Truck size={24} className="text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Envío Gratis</h4>
+                <p className="text-sm text-muted-foreground">En pedidos mayores a $100</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 p-6 bg-card rounded-xl">
+              <div className="p-3 rounded-full bg-primary/20">
+                <Shield size={24} className="text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Garantía 2 Años</h4>
+                <p className="text-sm text-muted-foreground">En todos los productos</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 p-6 bg-card rounded-xl">
+              <div className="p-3 rounded-full bg-primary/20">
+                <CreditCard size={24} className="text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Pago Seguro</h4>
+                <p className="text-sm text-muted-foreground">Múltiples métodos de pago</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Detail Modal */}
+      <AnimatePresence>
+        {selectedProduct && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setSelectedProduct(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-card border border-border rounded-xl z-50 overflow-hidden"
+            >
               <button 
-                onClick={() => setIsCartOpen(false)}
-                className="p-2 hover:bg-secondary rounded-lg"
+                onClick={() => setSelectedProduct(null)}
+                className="absolute top-4 right-4 p-2 hover:bg-secondary rounded-lg z-10"
               >
                 <X size={20} />
               </button>
-            </div>
-
-            <div className="flex-1 overflow-auto p-6">
-              {cart.length === 0 ? (
-                <div className="text-center py-12">
-                  <ShoppingCart size={48} className="mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Tu carrito está vacío</p>
+              
+              <div className="grid md:grid-cols-2">
+                <div className="bg-gradient-to-br from-secondary to-secondary/50 p-12 flex items-center justify-center">
+                  <span className="text-8xl">{selectedProduct.image}</span>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {cart.map(item => (
-                    <div key={item.id} className="flex items-center gap-4 p-4 bg-secondary/50 rounded-lg">
-                      <span className="text-3xl">{item.image}</span>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.name}</p>
-                        <p className="text-primary font-semibold">${item.price}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="p-1 hover:bg-secondary rounded"
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="w-8 text-center">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="p-1 hover:bg-secondary rounded"
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                      <button 
-                        onClick={() => removeFromCart(item.id)}
-                        className="p-1 text-muted-foreground hover:text-destructive"
-                      >
-                        <X size={16} />
-                      </button>
+                <div className="p-6 overflow-y-auto max-h-[60vh] md:max-h-none">
+                  <Badge className="mb-2">{selectedProduct.category}</Badge>
+                  <h3 className="text-2xl font-bold mb-2">{selectedProduct.name}</h3>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      <Star size={16} fill="currentColor" />
+                      <span className="font-medium">{selectedProduct.rating}</span>
                     </div>
-                  ))}
+                    <span className="text-sm text-muted-foreground">({selectedProduct.reviews} reseñas)</span>
+                  </div>
+
+                  <p className="text-muted-foreground mb-6">{selectedProduct.description}</p>
+
+                  <div className="flex items-baseline gap-3 mb-6">
+                    <span className="text-3xl font-bold text-primary">${selectedProduct.price}</span>
+                    {selectedProduct.originalPrice && (
+                      <span className="text-xl text-muted-foreground line-through">
+                        ${selectedProduct.originalPrice}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full gap-2" 
+                      size="lg"
+                      onClick={() => {
+                        addToCart(selectedProduct);
+                        setSelectedProduct(null);
+                      }}
+                    >
+                      <ShoppingCart size={20} />
+                      Agregar al Carrito
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2"
+                      onClick={() => toggleFavorite(selectedProduct.id)}
+                    >
+                      <Heart size={20} fill={favorites.includes(selectedProduct.id) ? "currentColor" : "none"} />
+                      {favorites.includes(selectedProduct.id) ? "En Favoritos" : "Agregar a Favoritos"}
+                    </Button>
+                  </div>
+
+                  <div className="mt-6 pt-6 border-t border-border space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Truck size={16} />
+                      <span>Envío gratis en pedidos +$100</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Shield size={16} />
+                      <span>Garantía de 2 años incluida</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Cart Sidebar with Checkout */}
+      <AnimatePresence>
+        {isCartOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => {
+                if (checkoutStep === "cart") setIsCartOpen(false);
+              }}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border z-50 flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <div className="flex items-center gap-3">
+                  {checkoutStep !== "cart" && !orderComplete && (
+                    <button 
+                      onClick={() => setCheckoutStep(
+                        checkoutStep === "payment" ? "shipping" : "cart"
+                      )}
+                      className="p-1 hover:bg-secondary rounded"
+                    >
+                      <ArrowLeft size={20} />
+                    </button>
+                  )}
+                  <h3 className="text-xl font-bold">
+                    {checkoutStep === "cart" && `Carrito (${cartItemsCount})`}
+                    {checkoutStep === "shipping" && "Datos de Envío"}
+                    {checkoutStep === "payment" && "Método de Pago"}
+                    {checkoutStep === "confirmation" && "Confirmación"}
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (orderComplete) resetCheckout();
+                    else setIsCartOpen(false);
+                  }}
+                  className="p-2 hover:bg-secondary rounded-lg"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Checkout Steps Indicator */}
+              {!orderComplete && cart.length > 0 && (
+                <div className="px-6 py-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    {["cart", "shipping", "payment"].map((step, index) => (
+                      <div key={step} className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                          checkoutStep === step ? "bg-primary text-primary-foreground" :
+                          ["shipping", "payment"].indexOf(checkoutStep) > ["cart", "shipping", "payment"].indexOf(step) 
+                            ? "bg-green-500 text-white" : "bg-secondary text-muted-foreground"
+                        }`}>
+                          {["shipping", "payment"].indexOf(checkoutStep) > ["cart", "shipping", "payment"].indexOf(step) 
+                            ? <Check size={16} /> : index + 1}
+                        </div>
+                        {index < 2 && (
+                          <ChevronRight size={16} className="mx-2 text-muted-foreground" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {cart.length > 0 && (
-              <div className="p-6 border-t border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="text-xl font-bold">${cartTotal.toFixed(2)}</span>
-                </div>
-                <Button className="w-full" size="lg">
-                  Proceder al Pago
-                </Button>
-                <p className="text-xs text-center text-muted-foreground mt-3">
-                  Envío gratis en pedidos mayores a $100
-                </p>
+              {/* Content */}
+              <div className="flex-1 overflow-auto p-6">
+                {/* Cart Items */}
+                {checkoutStep === "cart" && (
+                  cart.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ShoppingCart size={48} className="mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">Tu carrito está vacío</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {cart.map(item => (
+                        <div key={item.id} className="flex items-center gap-4 p-4 bg-secondary/50 rounded-lg">
+                          <span className="text-3xl">{item.image}</span>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{item.name}</p>
+                            <p className="text-primary font-semibold">${item.price}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="p-1 hover:bg-secondary rounded"
+                            >
+                              <Minus size={16} />
+                            </button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <button 
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="p-1 hover:bg-secondary rounded"
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+                          <button 
+                            onClick={() => removeFromCart(item.id)}
+                            className="p-1 text-muted-foreground hover:text-destructive"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+
+                {/* Shipping Form */}
+                {checkoutStep === "shipping" && (
+                  <form onSubmit={handleShippingSubmit} className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Nombre Completo</label>
+                      <Input 
+                        value={shippingInfo.name}
+                        onChange={(e) => setShippingInfo({...shippingInfo, name: e.target.value})}
+                        placeholder="Juan Pérez"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <Input 
+                        type="email"
+                        value={shippingInfo.email}
+                        onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
+                        placeholder="juan@email.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Dirección</label>
+                      <Input 
+                        value={shippingInfo.address}
+                        onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
+                        placeholder="Calle 123 #45-67"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Ciudad</label>
+                      <Input 
+                        value={shippingInfo.city}
+                        onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
+                        placeholder="Bogotá"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Teléfono</label>
+                      <Input 
+                        value={shippingInfo.phone}
+                        onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
+                        placeholder="+57 300 123 4567"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full mt-6">
+                      Continuar al Pago
+                    </Button>
+                  </form>
+                )}
+
+                {/* Payment Form */}
+                {checkoutStep === "payment" && (
+                  <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                    <div className="p-4 bg-secondary/50 rounded-lg mb-4">
+                      <p className="text-sm text-muted-foreground mb-1">Enviar a:</p>
+                      <p className="font-medium">{shippingInfo.name}</p>
+                      <p className="text-sm text-muted-foreground">{shippingInfo.address}, {shippingInfo.city}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Número de Tarjeta</label>
+                      <Input placeholder="1234 5678 9012 3456" required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Fecha de Exp.</label>
+                        <Input placeholder="MM/AA" required />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">CVV</label>
+                        <Input placeholder="123" required />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Nombre en la Tarjeta</label>
+                      <Input placeholder="JUAN PEREZ" required />
+                    </div>
+
+                    <div className="p-4 bg-primary/10 rounded-lg mt-6">
+                      <div className="flex justify-between mb-2">
+                        <span>Subtotal</span>
+                        <span>${cartTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span>Envío</span>
+                        <span>{shippingCost === 0 ? "Gratis" : `$${shippingCost}`}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
+                        <span>Total</span>
+                        <span className="text-primary">${orderTotal.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full gap-2" size="lg">
+                      <CreditCard size={20} />
+                      Pagar ${orderTotal.toFixed(2)}
+                    </Button>
+                  </form>
+                )}
+
+                {/* Confirmation */}
+                {checkoutStep === "confirmation" && (
+                  <div className="text-center py-8">
+                    {!orderComplete ? (
+                      <>
+                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                          <CreditCard size={32} className="text-primary" />
+                        </div>
+                        <p className="text-lg font-medium">Procesando tu pago...</p>
+                        <p className="text-muted-foreground">Por favor espera un momento</p>
+                      </>
+                    ) : (
+                      <>
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4"
+                        >
+                          <Check size={40} className="text-green-500" />
+                        </motion.div>
+                        <h3 className="text-2xl font-bold mb-2">¡Pedido Confirmado!</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Gracias por tu compra, {shippingInfo.name}
+                        </p>
+                        <div className="p-4 bg-secondary/50 rounded-lg text-left mb-6">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Package size={20} className="text-primary" />
+                            <span className="font-medium">Detalles del envío</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{shippingInfo.address}</p>
+                          <p className="text-sm text-muted-foreground">{shippingInfo.city}</p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Recibirás un email de confirmación en {shippingInfo.email}
+                          </p>
+                        </div>
+                        <Button onClick={resetCheckout} className="w-full">
+                          Seguir Comprando
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </motion.div>
-        </>
-      )}
+
+              {/* Footer - Only show for cart */}
+              {checkoutStep === "cart" && cart.length > 0 && (
+                <div className="p-6 border-t border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-xl font-bold">${cartTotal.toFixed(2)}</span>
+                  </div>
+                  <Button className="w-full" size="lg" onClick={handleCheckout}>
+                    Proceder al Pago
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground mt-3">
+                    Envío gratis en pedidos mayores a $100
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
