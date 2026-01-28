@@ -24,15 +24,29 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+// Formato de precio en pesos colombianos
+const formatCOP = (price: number) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+};
+
 const products = [
-  { id: 1, name: "Auriculares Bluetooth Pro", price: 149.99, originalPrice: 199.99, rating: 4.8, reviews: 234, image: "🎧", category: "Electrónicos", badge: "Más vendido", description: "Auriculares inalámbricos con cancelación de ruido activa y 30h de batería." },
-  { id: 2, name: "Smartwatch Deportivo", price: 299.99, originalPrice: null, rating: 4.6, reviews: 156, image: "⌚", category: "Electrónicos", badge: null, description: "Reloj inteligente con GPS, monitor cardíaco y resistencia al agua." },
-  { id: 3, name: "Mochila Urban Tech", price: 89.99, originalPrice: 119.99, rating: 4.9, reviews: 89, image: "🎒", category: "Accesorios", badge: "Oferta", description: "Mochila ergonómica con compartimento para laptop y puerto USB." },
-  { id: 4, name: "Cámara Instantánea", price: 79.99, originalPrice: null, rating: 4.7, reviews: 312, image: "📷", category: "Electrónicos", badge: null, description: "Cámara de impresión instantánea con flash automático." },
-  { id: 5, name: "Lámpara LED Inteligente", price: 45.99, originalPrice: 59.99, rating: 4.5, reviews: 178, image: "💡", category: "Hogar", badge: "Nuevo", description: "Lámpara WiFi compatible con Alexa y Google Home, 16M de colores." },
-  { id: 6, name: "Teclado Mecánico RGB", price: 129.99, originalPrice: null, rating: 4.8, reviews: 445, image: "⌨️", category: "Electrónicos", badge: "Más vendido", description: "Teclado gaming con switches mecánicos y retroiluminación RGB." },
-  { id: 7, name: "Botella Térmica Premium", price: 34.99, originalPrice: 44.99, rating: 4.6, reviews: 267, image: "🍶", category: "Accesorios", badge: null, description: "Botella de acero inoxidable, mantiene temperatura por 24h." },
-  { id: 8, name: "Altavoz Portátil", price: 69.99, originalPrice: 89.99, rating: 4.7, reviews: 198, image: "🔊", category: "Electrónicos", badge: "Oferta", description: "Altavoz Bluetooth con sonido 360° y resistencia al agua IPX7." },
+  { id: 1, name: "Auriculares Bluetooth Pro", price: 599900, originalPrice: 799900, rating: 4.8, reviews: 234, image: "🎧", category: "Electrónicos", badge: "Más vendido", description: "Auriculares inalámbricos con cancelación de ruido activa y 30h de batería.", specs: ["Bluetooth 5.3", "ANC", "30h batería", "Carga rápida"] },
+  { id: 2, name: "Smartwatch Deportivo", price: 1199900, originalPrice: null, rating: 4.6, reviews: 156, image: "⌚", category: "Electrónicos", badge: null, description: "Reloj inteligente con GPS, monitor cardíaco y resistencia al agua.", specs: ["GPS integrado", "50m waterproof", "SpO2", "7 días batería"] },
+  { id: 3, name: "Mochila Urban Tech", price: 359900, originalPrice: 479900, rating: 4.9, reviews: 89, image: "🎒", category: "Accesorios", badge: "Oferta", description: "Mochila ergonómica con compartimento para laptop y puerto USB.", specs: ["Laptop 15.6\"", "Puerto USB", "Antirrobo", "30L capacidad"] },
+  { id: 4, name: "Cámara Instantánea", price: 319900, originalPrice: null, rating: 4.7, reviews: 312, image: "📷", category: "Electrónicos", badge: null, description: "Cámara de impresión instantánea con flash automático.", specs: ["Film Instax Mini", "Flash auto", "Selfie mirror", "Pilas AA"] },
+  { id: 5, name: "Lámpara LED Inteligente", price: 183900, originalPrice: 239900, rating: 4.5, reviews: 178, image: "💡", category: "Hogar", badge: "Nuevo", description: "Lámpara WiFi compatible con Alexa y Google Home, 16M de colores.", specs: ["WiFi", "16M colores", "Alexa/Google", "App control"] },
+  { id: 6, name: "Teclado Mecánico RGB", price: 519900, originalPrice: null, rating: 4.8, reviews: 445, image: "⌨️", category: "Electrónicos", badge: "Más vendido", description: "Teclado gaming con switches mecánicos y retroiluminación RGB.", specs: ["Switch Red", "RGB per-key", "USB-C", "Hot-swap"] },
+  { id: 7, name: "Botella Térmica Premium", price: 139900, originalPrice: 179900, rating: 4.6, reviews: 267, image: "🍶", category: "Accesorios", badge: null, description: "Botella de acero inoxidable, mantiene temperatura por 24h.", specs: ["750ml", "Acero 18/8", "24h frío", "12h caliente"] },
+  { id: 8, name: "Altavoz Portátil", price: 279900, originalPrice: 359900, rating: 4.7, reviews: 198, image: "🔊", category: "Electrónicos", badge: "Oferta", description: "Altavoz Bluetooth con sonido 360° y resistencia al agua IPX7.", specs: ["20W", "IPX7", "12h batería", "TWS pairing"] },
+  { id: 9, name: "Monitor 27\" 4K UHD", price: 1899900, originalPrice: 2299900, rating: 4.9, reviews: 87, image: "🖥️", category: "Electrónicos", badge: "Premium", description: "Monitor profesional 4K con panel IPS y 99% sRGB para diseño y gaming.", specs: ["4K UHD", "IPS 144Hz", "99% sRGB", "USB-C PD"] },
+  { id: 10, name: "Organizador de Escritorio", price: 89900, originalPrice: null, rating: 4.4, reviews: 156, image: "📦", category: "Hogar", badge: null, description: "Organizador multifuncional de bambú con carga inalámbrica integrada.", specs: ["Bambú natural", "Carga Qi 15W", "5 compartimentos", "Portacelular"] },
+  { id: 11, name: "Maleta de Viaje Premium", price: 749900, originalPrice: 899900, rating: 4.8, reviews: 203, image: "🧳", category: "Accesorios", badge: "Oferta", description: "Maleta de cabina con carcasa dura, ruedas 360° y candado TSA.", specs: ["22\" carry-on", "TSA lock", "Ruedas 360°", "Policarbonato"] },
+  { id: 12, name: "Humidificador Aromático", price: 149900, originalPrice: null, rating: 4.5, reviews: 312, image: "💨", category: "Hogar", badge: "Nuevo", description: "Humidificador ultrasónico con difusor de aromas y luz LED ambiente.", specs: ["300ml", "8h autonomía", "LED 7 colores", "Silencioso"] },
 ];
 
 const categories = ["Todos", "Electrónicos", "Accesorios", "Hogar"];
@@ -114,7 +128,7 @@ const Ecommerce = () => {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const shippingCost = cartTotal > 100 ? 0 : 9.99;
+  const shippingCost = cartTotal > 400000 ? 0 : 39900;
   const orderTotal = cartTotal + shippingCost;
 
   const handleCheckout = () => {
@@ -230,7 +244,7 @@ const Ecommerce = () => {
               Hasta <span className="text-primary">50% OFF</span> en Electrónicos
             </h2>
             <p className="text-muted-foreground text-lg mb-6">
-              Descubre nuestra colección de productos tecnológicos con los mejores precios del mercado.
+              Descubre nuestra colección de productos tecnológicos con los mejores precios del mercado colombiano.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button size="lg" className="gap-2">
@@ -240,7 +254,7 @@ const Ecommerce = () => {
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Truck size={18} />
-                  <span>Envío gratis +$100</span>
+                  <span>Envío gratis +$400.000</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Shield size={18} />
@@ -338,10 +352,10 @@ const Ecommerce = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-lg font-bold">${product.price}</span>
+                    <span className="text-lg font-bold">{formatCOP(product.price)}</span>
                     {product.originalPrice && (
-                      <span className="text-sm text-muted-foreground line-through ml-2">
-                        ${product.originalPrice}
+                      <span className="text-xs text-muted-foreground line-through block">
+                        {formatCOP(product.originalPrice)}
                       </span>
                     )}
                   </div>
@@ -370,7 +384,7 @@ const Ecommerce = () => {
               </div>
               <div>
                 <h4 className="font-semibold">Envío Gratis</h4>
-                <p className="text-sm text-muted-foreground">En pedidos mayores a $100</p>
+                <p className="text-sm text-muted-foreground">En pedidos mayores a $400.000</p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-6 bg-card rounded-xl">
@@ -437,14 +451,26 @@ const Ecommerce = () => {
 
                   <p className="text-muted-foreground mb-6">{selectedProduct.description}</p>
 
-                  <div className="flex items-baseline gap-3 mb-6">
-                    <span className="text-3xl font-bold text-primary">${selectedProduct.price}</span>
+                  <div className="flex items-baseline gap-3 mb-4">
+                    <span className="text-2xl font-bold text-primary">{formatCOP(selectedProduct.price)}</span>
                     {selectedProduct.originalPrice && (
-                      <span className="text-xl text-muted-foreground line-through">
-                        ${selectedProduct.originalPrice}
+                      <span className="text-lg text-muted-foreground line-through">
+                        {formatCOP(selectedProduct.originalPrice)}
                       </span>
                     )}
                   </div>
+                  
+                  {/* Product Specs */}
+                  {'specs' in selectedProduct && selectedProduct.specs && (
+                    <div className="grid grid-cols-2 gap-2 mb-6">
+                      {(selectedProduct.specs as string[]).map((spec, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Check size={14} className="text-primary" />
+                          <span>{spec}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="space-y-3">
                     <Button 
@@ -471,7 +497,7 @@ const Ecommerce = () => {
                   <div className="mt-6 pt-6 border-t border-border space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Truck size={16} />
-                      <span>Envío gratis en pedidos +$100</span>
+                      <span>Envío gratis en pedidos +$400.000</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Shield size={16} />
@@ -574,7 +600,7 @@ const Ecommerce = () => {
                           <span className="text-3xl">{item.image}</span>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{item.name}</p>
-                            <p className="text-primary font-semibold">${item.price}</p>
+                            <p className="text-primary font-semibold">{formatCOP(item.price)}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <button 
@@ -689,21 +715,21 @@ const Ecommerce = () => {
                     <div className="p-4 bg-primary/10 rounded-lg mt-6">
                       <div className="flex justify-between mb-2">
                         <span>Subtotal</span>
-                        <span>${cartTotal.toFixed(2)}</span>
+                        <span>{formatCOP(cartTotal)}</span>
                       </div>
                       <div className="flex justify-between mb-2">
                         <span>Envío</span>
-                        <span>{shippingCost === 0 ? "Gratis" : `$${shippingCost}`}</span>
+                        <span>{shippingCost === 0 ? "Gratis" : formatCOP(shippingCost)}</span>
                       </div>
                       <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
                         <span>Total</span>
-                        <span className="text-primary">${orderTotal.toFixed(2)}</span>
+                        <span className="text-primary">{formatCOP(orderTotal)}</span>
                       </div>
                     </div>
 
                     <Button type="submit" className="w-full gap-2" size="lg">
                       <CreditCard size={20} />
-                      Pagar ${orderTotal.toFixed(2)}
+                      Pagar {formatCOP(orderTotal)}
                     </Button>
                   </form>
                 )}
@@ -757,13 +783,13 @@ const Ecommerce = () => {
                 <div className="p-6 border-t border-border">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-xl font-bold">${cartTotal.toFixed(2)}</span>
+                    <span className="text-xl font-bold">{formatCOP(cartTotal)}</span>
                   </div>
                   <Button className="w-full" size="lg" onClick={handleCheckout}>
                     Proceder al Pago
                   </Button>
                   <p className="text-xs text-center text-muted-foreground mt-3">
-                    Envío gratis en pedidos mayores a $100
+                    Envío gratis en pedidos mayores a $400.000
                   </p>
                 </div>
               )}
